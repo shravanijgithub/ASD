@@ -1,43 +1,36 @@
-import os
-from flask import Flask, request, render_template
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
+import streamlit as st
+import tensorflow as tf
 import numpy as np
-from werkzeug.utils import secure_filename
+from PIL import Image
 
-app = Flask(__name__)
+# Load model
+@st.cache_resource
+def load_model():
+    return tf.keras.models.load_model("autism_model.h5")
 
-model = load_model('autism (1).h5') 
+model = load_model()
 
-def preprocess_image(img_path):
-    img = image.load_img(img_path, target_size=(256, 256))
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)
-    img_array /= 255.0 
-    return img_array
+# Preprocessing function
+def preprocess_image(img):
+    img = img.resize((128, 128))  # Change if your model expects different size
+    img = np.array(img) / 255.0
+    img = np.expand_dims(img, axis=0)
+    return img
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-    
-        file = request.files['image']
-        filename = secure_filename(file.filename)
-        if file:
-            img_path = os.path.join('static/uploads', file.filename)
-            file.save(img_path)
-            
-            
-            img_array = preprocess_image(img_path)
-            prediction = model.predict(img_array)
-            
-            if prediction > 0.015:
-                result = 'Non Autistic'
-            else:
-                result = 'Autistic'
-            return render_template('index.html', img_path=img_path,filename=filename, result=result)
-    
-    return render_template('index.html', img_path=None, result=None)
+# Streamlit UI
+st.title("🧠 Autism Detection from Facial Image")
+st.write("Upload a facial image to detect signs of autism.")
 
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if uploaded_file is not None:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
+
+    if st.button("Predict"):
+        with st.spinner("Analyzing..."):
+            processed_image = preprocess_image(image)
+            prediction = model.predict(processed_image)[0][0]
+            label = "Autistic" if prediction > 0.5 else "Non-Autistic"
+            st.success(f"Prediction: **{label}**")
+
