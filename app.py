@@ -2,22 +2,28 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import gdown
+import os
 
-# Load model
+# Download the model if not already present
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("autism_model.h5")
+    model_path = "autism_model.h5"
+    if not os.path.exists(model_path):
+        url = "https://drive.google.com/uc?id=1dnmjQRBYE2TAk1JPMlTxJrKaDQlMtq_L"
+        gdown.download(url, model_path, quiet=False)
+    return tf.keras.models.load_model(model_path)
 
 model = load_model()
 
-# Preprocessing function
+# Preprocessing
 def preprocess_image(img):
-    img = img.resize((128, 128))  # Change if your model expects different size
+    img = img.resize((128, 128))  # Adjust if your model uses another size
     img = np.array(img) / 255.0
     img = np.expand_dims(img, axis=0)
     return img
 
-# Streamlit UI
+# UI
 st.title("🧠 Autism Detection from Facial Image")
 st.write("Upload a facial image to detect signs of autism.")
 
@@ -32,5 +38,5 @@ if uploaded_file is not None:
             processed_image = preprocess_image(image)
             prediction = model.predict(processed_image)[0][0]
             label = "Autistic" if prediction > 0.5 else "Non-Autistic"
-            st.success(f"Prediction: **{label}**")
-
+            confidence = round(prediction * 100, 2) if label == "Autistic" else round((1 - prediction) * 100, 2)
+            st.success(f"Prediction: **{label}** ({confidence}% confidence)")
