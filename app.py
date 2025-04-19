@@ -18,9 +18,9 @@ model = load_model()
 
 # Preprocessing
 def preprocess_image(image):
-    image = image.resize((80, 60))  # Use original training input size
+    image = image.resize((256, 256))  # Match the model's expected input size
     image = np.array(image) / 255.0
-    image = np.expand_dims(image, axis=0)  # shape: (1, 60, 80, 3)
+    image = np.expand_dims(image, axis=0)  # Add batch dimension
     return image
 
 
