@@ -1,4 +1,4 @@
 streamlit
 flask
-tensorflow
-tensorflow==2.15.0
+tensorflow==2.19.0
+
