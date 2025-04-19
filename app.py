@@ -17,11 +17,13 @@ def load_model():
 model = load_model()
 
 # Preprocessing
-def preprocess_image(img):
-    img = img.resize((128, 128))  # Adjust if your model uses another size
-    img = np.array(img) / 255.0
-    img = np.expand_dims(img, axis=0)
-    return img
+def preprocess_image(image):
+    image = image.resize((120, 120))  # resize to match expected shape
+    image = np.array(image) / 255.0   # normalize
+    image = image.flatten()           # flatten to (14400,)
+    image = image.reshape(1, -1)      # reshape to (1, 14400)
+    return image
+
 
 # UI
 st.title("🧠 Autism Detection from Facial Image")
